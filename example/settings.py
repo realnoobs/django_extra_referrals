@@ -5,7 +5,6 @@ SECRET_KEY = 'p2e&!&2bmv^=(23^k3e+m!l)$*ohjm$tsna+j!)_fjw8zk@023'
 DEBUG = True
 ALLOWED_HOSTS = []
 ROOT_URLCONF = 'example.urls'
-AUTH_USER_MODEL = 'example.User'
 
 # Application definition
 

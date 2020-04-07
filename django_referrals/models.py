@@ -11,6 +11,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django_numerators.models import NumeratorMixin
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
+from django_referrals.feeschema import get_fee_schema
+
 _ = translation.ugettext_lazy
 
 
@@ -28,11 +30,6 @@ class RuleClass(enum.Enum):
     RULE_C = 'C'
     RULE_D = 'D'
     RULE_E = 'E'
-
-
-class FeeClass(enum.Enum):
-    FLAT = 'FLAT'
-    LEVEL = 'LEVEL'
 
 
 class Grade(models.Model):
@@ -211,18 +208,13 @@ class Referral(NumeratorMixin, MPTTModel, models.Model):
         editable=False,
         primary_key=True,
         verbose_name='uuid')
-    fee_class = models.SlugField(
-        max_length=80,
-        choices=[(str(x.value), str(x.name.replace('_', ' '))) for x in FeeClass],
-        default=FeeClass.FLAT.value,
-        verbose_name=_("fee class"))
     parent = TreeForeignKey(
         'self', null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='downlines',
         verbose_name=_('Up Line'))
     account = models.OneToOneField(
-        get_user_model(), editable=False,
+        get_user_model(),
         on_delete=models.CASCADE,
         verbose_name=_('account'))
     balance = models.DecimalField(
@@ -240,6 +232,10 @@ class Referral(NumeratorMixin, MPTTModel, models.Model):
             if self.account.get_full_name() in ['', None]
             else self.account.get_full_name()
         )
+
+    def update_balance(self, balance):
+        self.balance = balance
+        self.save()
 
     def get_referral_limit(self):
         return getattr(settings, 'REFERRAL_DOWNLINE_LIMIT', None) or self.limit
@@ -274,18 +270,18 @@ class Transaction(NumeratorMixin):
         verbose_name=_("Amount"))
     rate = models.DecimalField(
         default=0.00,
-        max_digits=4,
+        max_digits=5,
         decimal_places=2,
         validators=[
             MinValueValidator(0),
             MaxValueValidator(100)
         ],
         verbose_name=_('Fee Rate'))
-    fee = models.DecimalField(
+    total = models.DecimalField(
         default=0,
         max_digits=15,
         decimal_places=2,
-        verbose_name=_("Fee"))
+        verbose_name=_("Total"))
     old_balance = models.DecimalField(
         default=0,
         max_digits=15,
@@ -324,3 +320,98 @@ class Transaction(NumeratorMixin):
 
     def __str__(self):
         return self.inner_id
+
+    def increase_balance(self):
+        self.balance = self.referral.balance + self.total
+        return self.balance
+
+    def decrease_balance(self):
+        self.balance = self.referral.balance - self.total
+        return self.balance
+
+    def calculate_balance(self):
+        self.old_balance = self.referral.balance
+        return {'IN': self.increase_balance, 'OUT': self.decrease_balance}[self.flow]()
+
+    def get_total(self):
+        return (self.amount * self.rate) / 100
+
+    def save(self, *args, **kwargs):
+        self.total = self.get_total()
+        self.calculate_balance()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def make_commit(obj):
+        model_name = str(obj._meta.model_name).title()
+        amount = getattr(obj, 'amount', None)
+        if not bool(amount):
+            raise ValueError(
+                "%s amount invalid" % model_name
+            )
+
+        creator = getattr(obj, 'creator', None)
+        if not creator:
+            return
+
+        referral = getattr(creator, 'referral', None)
+        if not referral:
+            return
+
+        uplines = referral.get_uplines()
+        schema = get_fee_schema(referral)
+
+        for idx in range(uplines.count()):
+            fee_rate = schema.get_upline_rates()[idx]
+            upline = uplines[idx]
+            transaction = Transaction(
+                content_object=obj,
+                rate=fee_rate,
+                amount=obj.amount,
+                referral=upline,
+                note='%s verified' % model_name
+            )
+            transaction.save()
+            upline.update_balance(transaction.balance)
+
+    @staticmethod
+    def make_cancel(obj, flow='IN'):
+        model_name = str(obj._meta.model_name).title()
+        reverse_flow = {'IN': 'OUT', 'OUT': 'IN'}
+        if flow not in ['IN', 'OUT']:
+            raise ValueError('flow must be IN or OUT')
+
+        transactions = Transaction.objects.filter(object_id=obj.id, flow='IN')
+        for trx in transactions:
+            transaction = Transaction(
+                flow=reverse_flow[flow],
+                rate=trx.rate,
+                amount=trx.amount,
+                referral=trx.referral,
+                content_object=obj,
+                note='%s canceled' % model_name
+            )
+            transaction.save()
+            trx.referral.update_balance(transaction.balance)
+
+    @staticmethod
+    def make_withdraw(obj):
+        model_name = str(obj._meta.model_name).title()
+        amount = getattr(obj, 'amount', None)
+        if not bool(amount):
+            raise ValueError("%s amount invalid" % model_name)
+
+        referral = getattr(obj, 'referral', None)
+        if not referral:
+            return
+
+        transaction = Transaction(
+            flow='OUT',
+            content_object=obj,
+            rate=100,
+            amount=obj.amount,
+            referral=referral,
+            note='%s confirmed' % model_name
+        )
+        transaction.save()
+        referral.update_balance(transaction.balance)

@@ -65,15 +65,6 @@ class ReferralAdmin(MPTTModelAdmin):
     list_select_related = ['account', 'parent']
     list_display = ['inner_id', 'account', 'parent', 'decendants', 'downlines', 'level', 'created_at', 'balance']
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        return False
-
     def decendants(self, obj):
         return obj.get_descendant_count()
 
@@ -86,6 +77,7 @@ class ReferralAdmin(MPTTModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
+    search_fields = ['referral__account__first_name']
     list_filter = [
         'created_at', 'flow'
     ]
@@ -96,7 +88,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'note',
         'amount',
         'rate',
-        'fee',
+        'total',
         'balance',
         'created_at'
     ]
