@@ -7,17 +7,18 @@ from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModel
 from mptt.admin import MPTTModelAdmin
 
 from .models import (
-    Grade,
     Rate,
     Rule,
+    Grade,
     GradeRule,
     GradeRate,
     Referral,
-    ReferralTransaction
+    Transaction
 )
 
 
-@admin.register(Rate)
+# TODO Next Release
+# @admin.register(Rate)
 class RateAdmin(admin.ModelAdmin):
     list_display = [
         'name',
@@ -26,7 +27,8 @@ class RateAdmin(admin.ModelAdmin):
     ]
 
 
-@admin.register(Rule)
+# TODO Next Release
+# @admin.register(Rule)
 class RuleAdmin(admin.ModelAdmin):
     list_display = [
         'name',
@@ -46,7 +48,8 @@ class GradeRuleInline(admin.TabularInline):
     model = GradeRule
 
 
-@admin.register(Grade)
+# TODO Next Release
+# @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
     inlines = [GradeRuleInline, GradeRateInline]
     list_display = [
@@ -62,14 +65,14 @@ class ReferralAdmin(MPTTModelAdmin):
     list_select_related = ['account', 'parent']
     list_display = ['inner_id', 'account', 'parent', 'decendants', 'downlines', 'level', 'created_at', 'balance']
 
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_change_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_add_permission(self, request):
-    #     return False
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
 
     def decendants(self, obj):
         return obj.get_descendant_count()
@@ -81,31 +84,26 @@ class ReferralAdmin(MPTTModelAdmin):
         return super().get_queryset(request).only('inner_id', 'account', 'parent')
 
 
-@admin.register(ReferralTransaction)
-class ReferralTransactionAdmin(PolymorphicParentModelAdmin):
-    """ Parent admin Referal Transaction Model, set child model in settings """
-    list_filter = ['created_at', 'flow']
-    list_display = ['inner_id', 'referral', 'flow', 'note', 'amount', 'balance', 'created_at']
-
-    def get_child_models(self):
-        child_models_list = getattr(settings, 'REFERRAL_TRANSACTION_CHILD_MODELS', None)
-        if not child_models_list:
-            raise NotImplementedError(
-                "Implement REFERRAL_TRANSACTION_CHILD_MODELS in settings"
-            )
-        try:
-            models = [apps.get_model(child_models, require_ready=True) for child_models in child_models_list]
-            return models
-        except ValueError:
-            raise ImproperlyConfigured(
-                "REFERRAL_TRANSACTION_CHILD_MODELS item must "
-                "be of the form 'app_label.model_name'"
-            )
-        except LookupError:
-            raise ImproperlyConfigured(
-                "Make sure all of REFERRAL_TRANSACTION_CHILD_MODELS is installed"
-            )
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_filter = [
+        'created_at', 'flow'
+    ]
+    list_display = [
+        'inner_id',
+        'referral',
+        'flow',
+        'note',
+        'amount',
+        'rate',
+        'fee',
+        'balance',
+        'created_at'
+    ]
 
 
-class ReferralTransactionChildAdmin(PolymorphicChildModelAdmin):
-    base_model = ReferralTransaction
+class ReferralInline(admin.TabularInline):
+    model = Referral
+    can_delete = False
+    extra = 1
+    max_num = 1
