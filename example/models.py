@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import translation
-from django_referrals.models import AbstractPayable, AbstractReceivable
+from django_extra_referrals.models import AbstractPayable, AbstractReceivable
 
 _ = translation.ugettext_lazy
 

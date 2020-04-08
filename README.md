@@ -12,7 +12,7 @@ $ pip install git+https://github.com/sasriawesome/django_extra_referrals.git#egg
 ## Settings
 
 ```
-REFERRAL_MODEL = 'django_referrals.Referral'
+REFERRAL_MODEL = 'django_extra_referrals.Referral'
 REFERRAL_COOKIE_KEY = 'ref_id'
 REFERRAL_PARAM_KEY = 'ref_id
 REFERRAL_MAX_DAY = 7 * 24 * 60 * 60 # a week

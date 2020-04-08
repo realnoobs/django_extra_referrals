@@ -347,20 +347,36 @@ class AbstractReceivable(NumeratorMixin, models.Model):
     creator = models.ForeignKey(
         get_user_model(), null=True, blank=True,
         on_delete=models.CASCADE)
-    referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    transaction = GenericRelation(Transaction, related_query_name='transactions')
-    is_paid = models.BooleanField(default=False, editable=False)
-    is_cancelled = models.BooleanField(default=False, editable=False)
+    referral = models.ForeignKey(
+        Referral, null=True, blank=True,
+        related_name="%(class)_refferals",
+        on_delete=models.CASCADE)
+    campaigner = models.ForeignKey(
+        Referral, null=True, blank=True,
+        related_name="%(class)_campaigns",
+        on_delete=models.CASCADE)
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2, default=0)
+    transaction = GenericRelation(
+        Transaction,
+        related_query_name='transactions')
+    is_paid = models.BooleanField(
+        default=False, editable=False)
+    is_cancelled = models.BooleanField(
+        default=False, editable=False)
 
 
 class AbstractPayable(NumeratorMixin, models.Model):
     class Meta:
         abstract = True
 
-    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    referral = models.ForeignKey(Referral, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    creator = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE)
+    referral = models.ForeignKey(
+        Referral, on_delete=models.CASCADE)
+    amount = models.DecimalField(
+        max_digits=15, decimal_places=2, default=0)
     transaction = GenericRelation(Transaction, related_query_name='transactions')
     is_paid = models.BooleanField(default=False, editable=False)
     is_cancelled = models.BooleanField(default=False, editable=False)
