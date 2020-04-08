@@ -349,11 +349,11 @@ class AbstractReceivable(NumeratorMixin, models.Model):
         on_delete=models.CASCADE)
     referral = models.ForeignKey(
         Referral, null=True, blank=True,
-        related_name="%(class)_refferals",
+        related_name="%(class)s_referrals",
         on_delete=models.CASCADE)
     campaigner = models.ForeignKey(
         Referral, null=True, blank=True,
-        related_name="%(class)_campaigns",
+        related_name="%(class)s_campaigns",
         on_delete=models.CASCADE)
     amount = models.DecimalField(
         max_digits=15,
