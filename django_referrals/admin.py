@@ -61,8 +61,9 @@ class GradeAdmin(admin.ModelAdmin):
 
 @admin.register(Referral)
 class ReferralAdmin(MPTTModelAdmin):
-    search_fields = ['account__first_name', 'account__last_name']
+    list_filter = ['level']
     list_select_related = ['account', 'parent']
+    search_fields = ['account__first_name', 'account__last_name']
     list_display = ['inner_id', 'account', 'parent', 'decendants', 'downlines', 'level', 'created_at', 'balance']
 
     def decendants(self, obj):
@@ -77,21 +78,19 @@ class ReferralAdmin(MPTTModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    search_fields = ['referral__account__first_name']
-    list_filter = [
-        'created_at', 'flow'
-    ]
-    list_display = [
-        'inner_id',
-        'referral',
-        'flow',
-        'note',
-        'amount',
-        'rate',
-        'total',
-        'balance',
-        'created_at'
-    ]
+    date_hierarchy = 'created_at'
+    list_filter = ['created_at', 'flow']
+    search_fields = ['referral__account__first_name', 'referral__account__username']
+    list_display = ['inner_id', 'referral', 'note', 'flow', 'rate', 'total', 'balance', 'created_at']
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class ReferralInline(admin.TabularInline):

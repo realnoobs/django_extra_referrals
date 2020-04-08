@@ -1,61 +1,51 @@
-from django_referrals.feeschema import get_fee_schema
+from django.utils import timezone
+from django_referrals.feeschema import get_fee_schema_class
 from django_referrals.models import Transaction
 
 
-def make_commit(obj):
-    model_name = str(obj._meta.model_name).title()
-    amount = getattr(obj, 'amount', None)
-    if not bool(amount):
-        raise ValueError(
-            "%s amount invalid" % model_name
-        )
+def post_referral_transaction(obj, referral, rate, flow):
+    opts = obj._meta
+    transaction = Transaction(
+        flow=flow,
+        content_object=obj,
+        rate=rate,
+        amount=obj.amount,
+        referral=referral,
+        is_verified=True,
+        verified_at=timezone.now(),
+        note='%s %s committed' % (opts.model_name.title(), obj.inner_id)
+    )
+    transaction.save()
+    referral.update_balance(transaction.balance)
 
+
+def receive_referral_balance(obj):
+    opts = obj._meta
     creator = getattr(obj, 'creator', None)
-    if not creator:
-        return
+    referral = getattr(obj, 'referral', None)
+    amount = getattr(obj, 'amount', None)
 
-    referral = getattr(creator, 'referral', None)
-    if not referral:
-        return
+    if not bool(amount):
+        raise ValueError("%s amount invalid" % opts.model_name.title())
 
-    uplines = referral.get_uplines()
-    schema = get_fee_schema(referral)
+    if creator:
+        uplines = creator.referral.get_uplines()
+        schema = get_fee_schema_class()(creator.referral)
+        for idx in range(uplines.count()):
+            rate = schema.get_upline_rates()[idx]
+            upline = uplines[idx]
+            post_referral_transaction(obj, upline, rate, 'IN')
 
-    for idx in range(uplines.count()):
-        fee_rate = schema.get_upline_rates()[idx]
-        upline = uplines[idx]
-        transaction = Transaction(
-            content_object=obj,
-            rate=fee_rate,
-            amount=obj.amount,
-            referral=upline,
-            note='%s verified' % model_name
-        )
-        transaction.save()
-        upline.update_balance(transaction.balance)
+    if referral and not creator:
+        Schema = get_fee_schema_class()
+        rate = Schema.CAMPAIGN_RATE
+        post_referral_transaction(obj, referral, rate, 'IN')
 
-
-def make_cancel(obj, flow='IN'):
-    model_name = str(obj._meta.model_name).title()
-    reverse_flow = {'IN': 'OUT', 'OUT': 'IN'}
-    if flow not in ['IN', 'OUT']:
-        raise ValueError('flow must be IN or OUT')
-
-    transactions = Transaction.objects.filter(object_id=obj.id, flow='IN')
-    for trx in transactions:
-        transaction = Transaction(
-            flow=reverse_flow[flow],
-            rate=trx.rate,
-            amount=trx.amount,
-            referral=trx.referral,
-            content_object=obj,
-            note='%s canceled' % model_name
-        )
-        transaction.save()
-        trx.referral.update_balance(transaction.balance)
+    obj.is_paid = True
+    obj.save()
 
 
-def make_withdraw(obj):
+def send_referral_balance(obj):
     model_name = str(obj._meta.model_name).title()
     amount = getattr(obj, 'amount', None)
     if not bool(amount):
@@ -65,13 +55,31 @@ def make_withdraw(obj):
     if not referral:
         return
 
-    transaction = Transaction(
-        flow='OUT',
-        content_object=obj,
-        rate=100,
-        amount=obj.amount,
-        referral=referral,
-        note='%s confirmed' % model_name
-    )
-    transaction.save()
-    referral.update_balance(transaction.balance)
+    if amount > referral.balance:
+        raise ValueError("%s amount too large, %s balance is %s" % (
+            model_name, str(referral.account), referral.balance
+        ))
+
+    post_referral_transaction(obj, referral, 100, 'OUT')
+    obj.is_paid = True
+    obj.save()
+
+
+def cancel_referral_transaction(obj, flow):
+    opts = obj._meta
+    reverse_flow = {'IN': 'OUT', 'OUT': 'IN'}
+
+    if flow not in ['IN', 'OUT']:
+        raise ValueError('flow must be IN or OUT')
+
+    transactions = obj.transaction.filter(flow=flow)
+    for trx in transactions:
+        if reverse_flow[flow] == 'OUT' and trx.total > trx.referral.balance:
+            raise ValueError("%s amount too large, %s balance is %s" % (
+                opts.model_name, str(trx.referral.account), trx.referral.balance
+            ))
+        post_referral_transaction(obj, trx.referral, trx.rate, reverse_flow[flow])
+
+    obj.is_paid = False
+    obj.is_cancelled = True
+    obj.save()

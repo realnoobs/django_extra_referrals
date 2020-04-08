@@ -1,4 +1,3 @@
-import decimal
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -18,7 +17,7 @@ if REFERRAL_SCHEMA not in SCHEMA_AVAILABLE:
 class FeeSchema:
     referral = None
 
-    def __init__(self, referral):
+    def __init__(self, referral=None):
         self.referral = referral
 
     def get_upline_rates(self):
@@ -31,18 +30,21 @@ class FeeSchema:
 class FlatFeeSchema(FeeSchema):
     """ Fee calculator for flat based fee"""
 
-    def __init__(self, referral):
+    CAMPAIGN_RATE = REFERRAL_FLAT_CAMPAIGN_RATE
+    UPLINES_RATE = REFERRAL_FLAT_UPLINES_RATE
+
+    def __init__(self, referral=None):
         super().__init__(referral)
 
     def get_upline_rates(self):
-        return REFERRAL_FLAT_UPLINES_RATE
+        return FlatFeeSchema.UPLINES_RATE
 
     def get_campaign_rates(self):
-        return REFERRAL_FLAT_CAMPAIGN_RATE
+        return FlatFeeSchema.CAMPAIGN_RATE
 
 
-def get_fee_schema(referral):
+def get_fee_schema_class():
     schema_class = {
         'FLAT': FlatFeeSchema
     }
-    return schema_class[REFERRAL_SCHEMA](referral)
+    return schema_class[REFERRAL_SCHEMA]

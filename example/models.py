@@ -6,9 +6,6 @@ _ = translation.ugettext_lazy
 
 
 class Donation(AbstractReceivable):
-    class Meta:
-        abstract = True
-
     fullname = models.CharField(max_length=150)
 
     def __str__(self):
@@ -16,9 +13,6 @@ class Donation(AbstractReceivable):
 
 
 class Withdraw(AbstractPayable):
-    class Meta:
-        abstract = True
-
     fullname = models.CharField(max_length=150)
 
     def __str__(self):

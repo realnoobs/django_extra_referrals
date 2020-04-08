@@ -11,8 +11,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django_numerators.models import NumeratorMixin
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
-from django_referrals.feeschema import get_fee_schema
-
 _ = translation.ugettext_lazy
 
 
@@ -276,7 +274,7 @@ class Transaction(NumeratorMixin):
             MinValueValidator(0),
             MaxValueValidator(100)
         ],
-        verbose_name=_('Fee Rate'))
+        verbose_name=_('Rate'))
     total = models.DecimalField(
         default=0,
         max_digits=15,
@@ -342,7 +340,7 @@ class Transaction(NumeratorMixin):
         super().save(*args, **kwargs)
 
 
-class AbstractReceivable(models.Model):
+class AbstractReceivable(NumeratorMixin, models.Model):
     class Meta:
         abstract = True
 
@@ -351,14 +349,18 @@ class AbstractReceivable(models.Model):
         on_delete=models.CASCADE)
     referral = models.ForeignKey(Referral, null=True, blank=True, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    transaction = GenericRelation(Transaction, related_query_name='donations')
+    transaction = GenericRelation(Transaction, related_query_name='transactions')
+    is_paid = models.BooleanField(default=False, editable=False)
+    is_cancelled = models.BooleanField(default=False, editable=False)
 
 
-class AbstractPayable(models.Model):
+class AbstractPayable(NumeratorMixin, models.Model):
     class Meta:
         abstract = True
 
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     referral = models.ForeignKey(Referral, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    checkout = GenericRelation(Transaction, related_query_name='withdraws')
+    transaction = GenericRelation(Transaction, related_query_name='transactions')
+    is_paid = models.BooleanField(default=False, editable=False)
+    is_cancelled = models.BooleanField(default=False, editable=False)
