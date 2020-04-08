@@ -2,7 +2,7 @@
 
 import os
 from setuptools import setup
-from django_numerators import __version__
+from django_referrals import __version__
 
 
 def read(fname):
@@ -13,19 +13,19 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='django-numerators',
+    name='django-referrals',
     version=__version__,
-    description='Django simple numerator, tests included',
+    description='Django referral with multilevel fee system',
     long_description=long_description,
     long_description_content_type="text/markdown",
     maintainer='Rizki Sasri Dwitama',
     maintainer_email='sasri.project@gmail.com',
     license="MIT",
-    url='https://github.com/sasriawesome/django_numerators',
+    url='https://github.com/sasriawesome/django_referrals',
     packages=[
-        'django_numerators',
-        'django_numerators.migrations',
-        'django_numerators.utils',
+        'django_referrals',
+        'django_referrals.migrations',
+        'django_referrals.utils',
     ],
     install_requires=[
         'Django>=2.2',
