@@ -22,7 +22,7 @@ def post_referral_transaction(obj, referral, rate, flow):
 def receive_referral_balance(obj):
     opts = obj._meta
     referral = getattr(obj, 'referral', None)
-    campaingner = getattr(obj, 'campaingner', None)
+    campaigner = getattr(obj, 'campaigner', None)
     amount = getattr(obj, 'amount', None)
 
     if not bool(amount):
@@ -36,10 +36,10 @@ def receive_referral_balance(obj):
             upline = uplines[idx]
             post_referral_transaction(obj, upline, rate, 'IN')
 
-    if campaingner and not referral:
+    if campaigner and not referral:
         Schema = get_fee_schema_class()
         rate = Schema.CAMPAIGN_RATE
-        post_referral_transaction(obj, campaingner, rate, 'IN')
+        post_referral_transaction(obj, campaigner, rate, 'IN')
 
     obj.is_paid = True
     obj.save()
