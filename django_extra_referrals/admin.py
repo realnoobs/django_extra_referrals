@@ -84,8 +84,6 @@ class TransactionAdmin(admin.ModelAdmin):
     list_display = ['inner_id', 'referral', 'note', 'flow', 'rate', 'total', 'balance', 'created_at']
 
 
-
-
 class ReferralInline(admin.TabularInline):
     model = Referral
     can_delete = False
