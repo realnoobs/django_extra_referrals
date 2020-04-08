@@ -1,58 +1,23 @@
-# Django Referrals
+# Django Extra Referrals
 Simpel referrals app for Django with simple multilevel fee system
 ## Installation
 ```
-$ pip install django-referrals
+$ pip install django-extra-referrals
 ```
 or
 ```
-$ pip install git+https://github.com/sasriawesome/django_numerators.git#egg=django-numerators
+$ pip install git+https://github.com/sasriawesome/django_extra_referrals.git#egg=django-extra-referrals
 ```
 
-## Usage
+## Settings
 
 ```
-from django.db import models
-from django_numerators.models import NumeratorMixin, NumeratorReset
+REFERRAL_MODEL = 'django_referrals.Referral'
+REFERRAL_COOKIE_KEY = 'ref_id'
+REFERRAL_PARAM_KEY = 'ref_id
+REFERRAL_MAX_DAY = 7 * 24 * 60 * 60 # a week
+REFERRAL_SCHEMA = 'FLAT'
+REFERRAL_FLAT_CAMPAIGN_RATE = 4
+REFERRAL_FLAT_UPLINES_RATE = [5, 2, 1]
 
-class Product(NumeratorMixin):
-    doc_prefix = 'PD'
-    name = models.CharField(max_length=100)
-
-```
-
-## Usage with Polymorphic
-install django-polymorphic
-```
-$ pip install django-polymorphic
-```
-### Using Parent Model doc_prefix
-```
-from django.db import models
-from polymorphic.models import PolymorphicModel
-from django_numerators.models import NumeratorMixin, NumeratorReset
-
-class Product(NumeratorMixin):
-    doc_prefix = 'PD'
-    parent_prefix = True
-    parent_model = 'Parent2'
-    name = models.CharField(max_length=100)
-
-class Inventory(Product):
-    pass
-
-class Asset(Product)
-    pass
-```
-### Using Child Model doc prefix
-
-```
-class Product(NumeratorMixin):
-    name = models.CharField(max_length=100)
-
-class Inventory(Product):
-    doc_prefix = 'INV'
-
-class Asset(Product)
-    doc_prefix = 'AST'
 ```
