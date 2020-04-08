@@ -41,9 +41,6 @@ def receive_referral_balance(obj):
         rate = Schema.CAMPAIGN_RATE
         post_referral_transaction(obj, campaigner, rate, 'IN')
 
-    obj.is_paid = True
-    obj.save()
-
 
 def send_referral_balance(obj):
     model_name = str(obj._meta.model_name).title()
@@ -60,10 +57,6 @@ def send_referral_balance(obj):
             model_name, str(referral.account), referral.balance
         ))
 
-    post_referral_transaction(obj, referral, 100, 'OUT')
-    obj.is_paid = True
-    obj.save()
-
 
 def cancel_referral_transaction(obj, flow):
     opts = obj._meta
@@ -79,7 +72,3 @@ def cancel_referral_transaction(obj, flow):
                 opts.model_name, str(trx.referral.account), trx.referral.balance
             ))
         post_referral_transaction(obj, trx.referral, trx.rate, reverse_flow[flow])
-
-    obj.is_paid = False
-    obj.is_cancelled = True
-    obj.save()

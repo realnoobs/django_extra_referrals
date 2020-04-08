@@ -219,7 +219,6 @@ class Referral(NumeratorMixin, MPTTModel, models.Model):
         default=0,
         max_digits=15,
         decimal_places=2,
-        editable=False,
         verbose_name=_("Balance"))
     created_at = models.DateTimeField(
         default=timezone.now, editable=False)
@@ -284,22 +283,19 @@ class Transaction(NumeratorMixin):
         default=0,
         max_digits=15,
         decimal_places=2,
-        editable=False,
         verbose_name=_("Old Balance"))
     balance = models.DecimalField(
         default=0,
         max_digits=15,
         decimal_places=2,
-        editable=False,
         verbose_name=_("Balance"))
     note = models.CharField(
         max_length=250,
         null=True, blank=True,
         verbose_name=_('Note'))
+    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(
         default=timezone.now, editable=False)
-    is_verified = models.BooleanField(
-        default=False)
     verified_at = models.DateTimeField(
         null=True, blank=True,
         editable=False,

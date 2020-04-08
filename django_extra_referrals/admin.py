@@ -83,14 +83,7 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ['referral__account__first_name', 'referral__account__username']
     list_display = ['inner_id', 'referral', 'note', 'flow', 'rate', 'total', 'balance', 'created_at']
 
-    def has_change_permission(self, request, obj=None):
-        return False
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 class ReferralInline(admin.TabularInline):

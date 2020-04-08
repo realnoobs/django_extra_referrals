@@ -31,18 +31,13 @@ class DonationAdmin(admin.ModelAdmin):
         with transaction.atomic():
             qs = queryset.filter(is_paid=True)
             for donation in qs:
-                if donation.creator:
+                if donation:
                     cancel_referral_transaction(donation, flow='IN')
                 donation.is_paid = False
                 donation.is_cancelled = True
                 donation.save()
 
     cancel_donation.short_description = 'Cancel donations'
-
-    def has_change_permission(self, request, obj=None):
-        if obj:
-            return not obj.is_cancelled
-        return super().has_change_permission(request, obj)
 
 
 class WithdrawAdmin(admin.ModelAdmin):
