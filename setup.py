@@ -2,7 +2,7 @@
 
 import os
 from setuptools import setup
-from django_referrals import __version__
+from django_extra_referrals import __version__
 
 
 def read(fname):
@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='django-referrals',
+    name='django-extra-referrals',
     version=__version__,
     description='Django referral with multilevel fee system',
     long_description=long_description,
@@ -21,14 +21,17 @@ setup(
     maintainer='Rizki Sasri Dwitama',
     maintainer_email='sasri.project@gmail.com',
     license="MIT",
-    url='https://github.com/sasriawesome/django_referrals',
+    url='https://github.com/sasriawesome/django_extra_referrals',
     packages=[
-        'django_referrals',
-        'django_referrals.migrations',
-        'django_referrals.utils',
+        'django_extra_referrals',
+        'django_extra_referrals.migrations',
+        'django_extra_referrals.utils',
     ],
     install_requires=[
-        'Django>=2.2',
+        "django>=2.2",
+        "django-numerators>=0.0.1",
+        "django-polymorphic>=2.1.2",
+        "django-mptt>=0.11.0",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path
 from django.shortcuts import reverse
 
-from django_referrals.views import (
+from django_extra_referrals.views import (
     receive_referral_balance,
     send_referral_balance,
     cancel_referral_transaction,

@@ -11,7 +11,7 @@ ROOT_URLCONF = 'example.urls'
 INSTALLED_APPS = [
 
     'example',
-    'django_referrals',
+    'django_extra_referrals',
     'django_numerators',
     'polymorphic',
     'mptt',

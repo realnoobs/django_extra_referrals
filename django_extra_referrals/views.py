@@ -1,6 +1,6 @@
 from django.utils import timezone
-from django_referrals.feeschema import get_fee_schema_class
-from django_referrals.models import Transaction
+from .feeschema import get_fee_schema_class
+from .models import Transaction
 
 
 def post_referral_transaction(obj, referral, rate, flow):
